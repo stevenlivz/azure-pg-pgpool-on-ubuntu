@@ -1,0 +1,30 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmName": {
+      "value": "project-rg-data-"
+    },
+    "virtualNetworkName": {
+      "value": "dev-rg-vnet"
+    },
+    "subnet1Name": {
+      "value": "dev-rg-subnet"
+    },
+    "storageAccountName": {
+      "value": "projectrgappsa"
+    },
+    "adminUsername": {
+      "value": ""
+    },
+    "region": {
+      "value": "West Europe"
+    },
+    "adminPassword": {
+      "value": ""
+    },
+    "replicatorPassword": {
+      "value": ""
+    }
+  }
+}

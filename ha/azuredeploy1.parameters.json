@@ -1,0 +1,36 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "value": "West Europe"
+    },
+    "vmName": {
+      "value": "project-rg-data-ha-node-1"
+    },
+    "virtualNetworkName": {
+      "value": "dev-rg-vnet"
+    },
+    "subnet1Name": {
+      "value": "dev-rg-subnet"
+    },
+    "adminUsername": {
+      "value": "cityadmin"
+    },
+    "sshKeyData": {
+      "value": ""
+    },
+    "storageAccountName": {
+      "value": "projectdeployment"
+    },
+    "vmSize": {
+      "value": "Standard_A0"
+    },
+    "fileUris": {
+      "value": ""
+    },
+    "lbStaticIp": {
+      "value": "10.0.0.150"
+    }
+  }
+}

@@ -1,0 +1,329 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "region": {
+      "type": "string",
+      "allowedValues": [
+        "West US",
+        "East US",
+        "East Asia",
+        "Southeast Asia",
+        "West Europe"
+      ],
+      "metadata": {
+        "description": "Location of the resource group and all contained resources"
+      }
+    },
+    "vmName": {
+      "type": "string",
+      "metadata": {
+        "description": "A prefix that is used for the VM Names - an index is added to each of these."
+      }
+    },
+    "virtualNetworkName": {
+      "type": "string",
+      "metadata": {
+        "description": "The virtualNetworkName."
+      }
+    },
+    "subnet1Name": {
+      "type": "string",
+      "metadata": {
+        "description": "The subnet1Name name."
+      }
+    },
+    "storageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Unique name of the new storage account that will be created to store virtual machine VHDs"
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "defaultValue": "azureuser",
+      "metadata": {
+        "description": "Virtual machine administrator username"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Virtual machine administrator password"
+      }
+    },
+    "tshirtSize": {
+      "type": "string",
+      "defaultValue": "XSmall",
+      "allowedValues": [
+        "XSmall",
+        "Small",
+        "Medium",
+        "Large",
+        "XLarge"
+      ],
+      "metadata": {
+        "description": "T-shirt size of the PostgreSQL deployment"
+      }
+    },
+    "replicatorPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The replication password used for PostgreSQL streaming replication"
+      }
+    },
+    "virtualNetworkName": {
+      "type": "string",
+      "defaultValue": "vnet",
+      "metadata": {
+        "description": "Virtual network name"
+      }
+    }
+  },
+  "variables": {
+    "templateBaseUrl": "https://raw.githubusercontent.com/stevenlivz/azure-postgres-on-ubuntu/master/",
+    "sharedTemplateUrl": "[concat(variables('templateBaseUrl'), 'shared-resources.json')]",
+    "tshirtSizeXSmall": {
+      "vmSize": "Standard_A0",
+      "diskSize": 1023,
+      "vmTemplate": "[concat(variables('templateBaseUrl'), 'database-1disk-resources.json')]",
+      "vmCount": 3,
+      "slaveCount": 2,
+      "storage": {
+        "name": "[parameters('storageAccountName')]",
+        "count": 1,
+        "pool": "db",
+        "map": [
+          0,
+          0
+        ]
+      }
+    },
+    "tshirtSizeSmall": {
+      "vmSize": "Standard_A1",
+      "diskSize": 1023,
+      "vmTemplate": "[concat(variables('templateBaseUrl'), 'database-2disk-resources.json')]",
+      "vmCount": 2,
+      "slaveCount": 1,
+      "storage": {
+        "name": "[parameters('storageAccountName')]",
+        "count": 1,
+        "pool": "db",
+        "map": [
+          0,
+          0
+        ]
+      }
+    },
+    "tshirtSizeMedium": {
+      "vmSize": "Standard_A3",
+      "diskSize": 1023,
+      "vmTemplate": "[concat(variables('templateBaseUrl'), 'database-8disk-resources.json')]",
+      "vmCount": 2,
+      "slaveCount": 1,
+      "storage": {
+        "name": "[parameters('storageAccountName')]",
+        "count": 2,
+        "pool": "db",
+        "map": [
+          0,
+          1
+        ]
+      }
+    },
+    "tshirtSizeLarge": {
+      "vmSize": "Standard_A4",
+      "diskSize": 1023,
+      "vmTemplate": "[concat(variables('templateBaseUrl'), 'database-16disk-resources.json')]",
+      "vmCount": 3,
+      "slaveCount": 2,
+      "storage": {
+        "name": "[parameters('storageAccountName')]",
+        "count": 2,
+        "pool": "db",
+        "map": [
+          0,
+          1,
+          1
+        ]
+      }
+    },
+    "tshirtSizeXLarge": {
+      "vmSize": "Standard_A4",
+      "diskSize": 1023,
+      "vmTemplate": "[concat(variables('templateBaseUrl'), 'database-16disk-resources.json')]",
+      "vmCount": 4,
+      "slaveCount": 3,
+      "storage": {
+        "name": "[parameters('storageAccountName')]",
+        "count": 2,
+        "pool": "db",
+        "map": [
+          0,
+          0,
+          1,
+          1
+        ]
+      }
+    },
+    "tshirtSize": "[variables(concat('tshirtSize', parameters('tshirtSize')))]",
+    "osSettings": {
+      "scripts": [
+        "[concat(variables('templateBaseUrl'), 'install_postgresql.sh')]",
+        "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/shared_scripts/ubuntu/vm-disk-utils-0.1.sh"
+      ],
+      "imageReference": {
+        "publisher": "Canonical",
+        "offer": "UbuntuServer",
+        "sku": "14.04.2-LTS",
+        "version": "latest"
+      }
+    },
+    "networkSettings": {
+      "virtualNetworkName": "[parameters('virtualNetworkName')]",
+      "addressPrefix": "10.0.0.0/16",
+      "subnet1Name": "[parameters('subnet1Name')]",
+      "subnet1Prefix": "10.0.0.0/24"
+    },
+    "availabilitySetSettings": {
+      "name": "[concat(parameters('vmName'), 'avset')]",
+      "fdCount": 3,
+      "udCount": 5
+    }
+  },
+  "resources": [
+    {
+      "name": "shared",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('sharedTemplateUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "storageSettings": {
+            "value": "[variables('tshirtSize').storage]"
+          },
+          "region": {
+            "value": "[parameters('region')]"
+          },
+          "networkSettings": {
+            "value": "[variables('networkSettings')]"
+          },
+          "availabilitySetSettings": {
+            "value": "[variables('availabilitySetSettings')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "master-node",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/', 'shared')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('tshirtSize').vmTemplate]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "replicatorPassword": {
+            "value": "[parameters('replicatorPassword')]"
+          },
+          "osSettings": {
+            "value": "[variables('osSettings')]"
+          },
+          "networkSettings": {
+            "value": "[variables('networkSettings')]"
+          },
+          "commonSettings": {
+            "value": {
+              "region": "[parameters('region')]",
+              "adminUsername": "[parameters('adminUsername')]",
+              "namespace": "[concat(parameters('vmName'), 'master-')]"
+            }
+          },
+          "storageSettings": {
+            "value": "[variables('tshirtSize').storage]"
+          },
+          "machineSettings": {
+            "value": {
+              "vmSize": "[variables('tshirtSize').vmSize]",
+              "diskSize": "[variables('tshirtSize').diskSize]",
+              "vmCount": 1,
+              "availabilitySet": "[variables('availabilitySetSettings').name]"
+            }
+          },
+          "masterIpAddress": {
+            "value": "0"
+          },
+          "dbType": {
+            "value": "MASTER"
+          }
+        }
+      }
+    },
+    {
+      "name": "slave-node",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/', 'master-node')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('tshirtSize').vmTemplate]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "replicatorPassword": {
+            "value": "[parameters('replicatorPassword')]"
+          },
+          "osSettings": {
+            "value": "[variables('osSettings')]"
+          },
+          "networkSettings": {
+            "value": "[variables('networkSettings')]"
+          },
+          "commonSettings": {
+            "value": {
+              "region": "[parameters('region')]",
+              "adminUsername": "[parameters('adminUsername')]",
+              "namespace": "[concat(parameters('vmName'), 'slave-')]"
+            }
+          },
+          "storageSettings": {
+            "value": "[variables('tshirtSize').storage]"
+          },
+          "machineSettings": {
+            "value": {
+              "vmSize": "[variables('tshirtSize').vmSize]",
+              "diskSize": "[variables('tshirtSize').diskSize]",
+              "vmCount": "[variables('tshirtSize').slaveCount]",
+              "availabilitySet": "[variables('availabilitySetSettings').name]"
+            }
+          },
+          "masterIpAddress": {
+            "value": "[reference('master-node').outputs.masterip.value]"
+          },
+          "dbType": {
+            "value": "SLAVE"
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}
