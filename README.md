@@ -1,4 +1,4 @@
-Postgres with 1 x Master and 2 x Slave using Streaming Replication and 2 x PGPool (using a loca balancer with a private ip - had issues with a public ip lb) in front and Watchdog.
+Postgres with 1 x Master and 2 x Slave using Streaming Replication and 2 x PGPool (using a load balancer with a private ip - had issues with a public ip lb) in front and Watchdog.
 
 See http://www.pgpool.net/pgpool-web/contrib_docs/watchdog/en.html
 
